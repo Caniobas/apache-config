@@ -1,0 +1,300 @@
+<?php
+// ==========================================
+// Production Line 1 – TV VIEW (WEBOS SAFE)
+// ==========================================
+
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
+
+$conn = new mysqli("localhost", "root", "", "line_tracker");
+if ($conn->connect_error) {
+  die("DB connection failed");
+}
+
+$lineName = "Production Line 1";
+
+$stmt = $conn->prepare("
+  SELECT *
+  FROM assembly_entries
+  WHERE line_name = ?
+  ORDER BY created_at DESC
+  LIMIT 1
+");
+$stmt->bind_param("s", $lineName);
+$stmt->execute();
+$data = $stmt->get_result()->fetch_assoc();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Production Line 1 – TV</title>
+
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; }
+
+html, body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #0f172a;
+  font-family: Arial, 'Inter', sans-serif;
+}
+
+/* COLORS */
+:root {
+  --primary: #169c8f;
+  --accent: #14a0e3;
+  --card: #ffffff;
+}
+
+/* WRAPPER – ADJUSTED FOR 55% SCALE */
+.tv-wrapper {
+  width: 182vw;
+  height: 182vh;
+  display: flex;
+}
+
+/* CARD – SCALED TO 55% */
+.tv-card {
+  width: 100%;
+  height: 100%;
+  background: var(--card);
+  display: flex;
+  flex-direction: column;
+
+  transform: scale(0.55);
+  transform-origin: top left;
+}
+
+/* HEADER */
+.tv-header {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+  text-align: center;
+  padding: 64px 32px;
+}
+
+.tv-header h1 {
+  margin: 0;
+  font-size: 96px;
+  font-weight: 700;
+}
+
+/* SUB HEADER */
+.tv-assembly {
+  background: #f1f5f9;
+  text-align: center;
+  font-size: 56px;
+  font-weight: 700;
+  padding: 32px;
+  color: #0f172a;
+}
+
+/* BODY */
+.tv-body {
+  flex: 1;
+  display: flex;
+}
+
+/* LEFT */
+.tv-info {
+  width: 56%;
+  display: flex;
+  flex-direction: column;
+  border-right: 2px solid #e5e7eb;
+}
+
+.tv-row {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tv-label {
+  width: 42%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 48px;
+  font-weight: 700;
+  padding: 32px;
+}
+
+.tv-value {
+  width: 58%;
+  font-size: 52px;
+  padding: 32px;
+}
+
+/* SERIALS */
+.tv-serial-header {
+  background: var(--primary);
+  color: #fff;
+  text-align: center;
+  font-size: 48px;
+  font-weight: 700;
+  padding: 32px;
+}
+
+.tv-serials {
+  padding: 32px;
+}
+
+.tv-serial {
+  float: left;
+  background: rgba(22,156,143,.15);
+  font-size: 36px;
+  padding: 16px 32px;
+  border-radius: 999px;
+  font-family: monospace;
+  margin: 12px;
+}
+
+.tv-serials::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+/* RIGHT */
+.tv-image {
+  width: 50%;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 96px;
+}
+
+.tv-image img {
+  width: 50%;
+  max-width: none;     /* ← KEY FIX */
+  max-height: none;    /* optional pero recommended */
+  object-fit: contain;
+  background: #d0cacaff;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+
+.tv-product-name {
+  margin-top: 32px;
+  font-size: 56px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+
+  /* Option 3 – Move up */
+  transform: translateY(-48px);  /* adjust value as needed */
+}
+
+.tv-product-desc {
+  margin-top: 16px;
+  font-size: 44px;
+  color: #334155;
+  text-align: center;
+
+  /* Option 3 – Move up */
+  transform: translateY(-32px);  /* adjust value as needed */
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="tv-wrapper">
+<?php if ($data): ?>
+<div class="tv-card">
+
+  <div class="tv-header">
+    <h1><?= htmlspecialchars($data['line_name']) ?></h1>
+  </div>
+
+  <div class="tv-assembly">
+    <?= htmlspecialchars($data['assembly_type']) ?>
+  </div>
+
+  <div class="tv-body">
+
+    <div class="tv-info">
+
+      <div class="tv-row">
+        <div class="tv-label">Product No.</div>
+        <div class="tv-value"><?= htmlspecialchars($data['material_code']) ?></div>
+      </div>
+
+      <div class="tv-row">
+        <div class="tv-label">Order No.</div>
+        <div class="tv-value"><?= htmlspecialchars($data['order_number']) ?></div>
+      </div>
+
+      <div class="tv-serial-header">SERIAL NUMBERS</div>
+      <div class="tv-serials">
+        <?php
+          $serials = json_decode($data['serial_numbers'], true);
+          if (is_array($serials)) {
+            foreach ($serials as $sn) {
+              echo "<div class='tv-serial'>".htmlspecialchars($sn)."</div>";
+            }
+          }
+        ?>
+      </div>
+
+      <div class="tv-row">
+        <div class="tv-label">SW Version</div>
+        <div class="tv-value"><?= htmlspecialchars($data['sw_version']) ?></div>
+      </div>
+
+      <div class="tv-row">
+        <div class="tv-label">Date Started</div>
+        <div class="tv-value"><?= htmlspecialchars($data['date_started']) ?></div>
+      </div>
+
+      <div class="tv-row">
+        <div class="tv-label">In-Charge</div>
+        <div class="tv-value"><?= htmlspecialchars($data['in_charge']) ?></div>
+      </div>
+
+    </div>
+
+    <div class="tv-image">
+      <?php if (!empty($data['product_name'])): ?>
+        <div class="tv-product-name"><?= htmlspecialchars($data['product_name']) ?></div>
+      <?php endif; ?>
+
+      <?php if (!empty($data['description'])): ?>
+        <div class="tv-product-desc"><?= htmlspecialchars($data['description']) ?></div>
+      <?php endif; ?>
+
+      <?php if (!empty($data['product_image'])): ?>
+        <img src="<?= htmlspecialchars($data['product_image']) ?>" alt="Product Image">
+      <?php endif; ?>
+    </div>
+
+  </div>
+
+</div>
+<?php endif; ?>
+</div>
+
+<script>
+setTimeout(() => location.reload(true), 60000);
+
+document.addEventListener("click", () => {
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen();
+  }
+});
+</script>
+
+</body>
+</html>
+
+<?php $conn->close(); ?>
